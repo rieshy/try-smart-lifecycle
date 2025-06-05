@@ -9,15 +9,19 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Service
 public class TaskProcessor implements SmartLifecycle {
     private static final Logger logger = LoggerFactory.getLogger(TaskProcessor.class);
+    private static final int CONCURRENT_TASKS = 3; // Number of concurrent tasks to process
+    private static final long POLL_TIMEOUT_MS = 100; // Timeout for polling tasks
     
     private final TaskQueue taskQueue;
     private final AtomicBoolean running = new AtomicBoolean(false);
-    private Thread processorThread;
+    private ExecutorService executorService;
 
     @Autowired
     public TaskProcessor(TaskQueue taskQueue) {
@@ -27,10 +31,37 @@ public class TaskProcessor implements SmartLifecycle {
     @Override
     public void start() {
         if (running.compareAndSet(false, true)) {
-            processorThread = new Thread(this::processTasks);
-            processorThread.setName("task-processor");
-            processorThread.start();
-            logger.info("Task processor started");
+            executorService = Executors.newFixedThreadPool(CONCURRENT_TASKS);
+            
+            // Start worker threads
+            for (int i = 0; i < CONCURRENT_TASKS; i++) {
+                final int workerId = i + 1;
+                executorService.submit(() -> {
+                    while (running.get()) {
+                        try {
+                            Task task = taskQueue.pollTask(POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                            if (task == null) {
+                                // No task available, continue checking
+                                continue;
+                            }
+                            if (!running.get()) {
+                                // Put task back in queue if we're shutting down
+                                taskQueue.addTask(task);
+                                break;
+                            }
+                            processTask(task);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            if (!running.get()) {
+                                break;
+                            }
+                            logger.error("Worker {} was interrupted", workerId, e);
+                        }
+                    }
+                });
+            }
+            
+            logger.info("Task processor started with {} workers", CONCURRENT_TASKS);
         }
     }
 
@@ -39,9 +70,10 @@ public class TaskProcessor implements SmartLifecycle {
         if (running.compareAndSet(true, false)) {
             logger.info("Stopping task processor...");
             try {
-                if (processorThread != null) {
-                    // Wait for the current task to complete
-                    processorThread.join();
+                executorService.shutdown();
+                if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
+                    logger.warn("Task processor did not terminate gracefully within timeout");
+                    executorService.shutdownNow();
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -72,29 +104,20 @@ public class TaskProcessor implements SmartLifecycle {
         return Integer.MAX_VALUE; // Start late, stop early
     }
 
-    private void processTasks() {
-        while (running.get()) {
-            try {
-                Task task = taskQueue.pollTask(1, TimeUnit.SECONDS);
-                if (task == null) {
-                    // No task available, check if we should continue
-                    if (!running.get()) {
-                        break;
-                    }
-                    continue;
-                }
-                
-                logger.info("Processing task: {}", task);
-                // Simulate task processing
-                Thread.sleep(2000);
-                logger.info("Task completed: {}", task);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                if (!running.get()) {
-                    break;
-                }
-                logger.error("Task processor was interrupted", e);
-            }
+    private void processTask(Task task) {
+        try {
+            logger.info("Processing task: {}", task);
+            // Simulate task processing
+            logger.info("Processing step 1 for task: {}", task);
+            Thread.sleep(2000);
+            logger.info("Processing step 2 for task: {}", task);
+            Thread.sleep(3000);
+            logger.info("Processing step 3 for task: {}", task);
+            Thread.sleep(2000);
+            logger.info("Processing completed for task: {}", task);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Task processing was interrupted for task: {}", task, e);
         }
     }
 } 
