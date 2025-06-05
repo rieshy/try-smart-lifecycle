@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,7 +60,7 @@ public class TaskProcessor implements SmartLifecycle {
     }
 
     @Override
-    public void stop(Runnable callback) {
+    public void stop(@NonNull Runnable callback) {
         stop();
         callback.run();
     }
