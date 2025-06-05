@@ -13,11 +13,20 @@ echo "Starting deployment process..."
 
 # Function to check if Tomcat is running
 is_tomcat_running() {
+    # Check PID file
     if [ -f "$TOMCAT_HOME/bin/catalina.pid" ]; then
-        return 0
-    else
-        return 1
+        local pid=$(cat "$TOMCAT_HOME/bin/catalina.pid")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            return 0
+        fi
     fi
+    
+    # Check process list for Tomcat
+    if ps aux | grep -v grep | grep -q "org.apache.catalina.startup.Bootstrap"; then
+        return 0
+    fi
+    
+    return 1
 }
 
 # Function to wait for Tomcat to stop
