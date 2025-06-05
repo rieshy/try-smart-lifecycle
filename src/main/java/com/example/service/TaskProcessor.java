@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class TaskProcessor implements SmartLifecycle {
@@ -31,11 +33,19 @@ public class TaskProcessor implements SmartLifecycle {
     @Override
     public void start() {
         if (running.compareAndSet(false, true)) {
-            executorService = Executors.newFixedThreadPool(CONCURRENT_TASKS);
+            executorService = Executors.newFixedThreadPool(CONCURRENT_TASKS, new ThreadFactory() {
+                private final AtomicInteger counter = new AtomicInteger(1);
+                
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("worker-" + counter.getAndIncrement());
+                    return thread;
+                }
+            });
             
             // Start worker threads
             for (int i = 0; i < CONCURRENT_TASKS; i++) {
-                final int workerId = i + 1;
                 executorService.submit(() -> {
                     while (running.get()) {
                         try {
@@ -55,7 +65,7 @@ public class TaskProcessor implements SmartLifecycle {
                             if (!running.get()) {
                                 break;
                             }
-                            logger.error("Worker {} was interrupted", workerId, e);
+                            logger.error("Worker was interrupted", e);
                         }
                     }
                 });
