@@ -8,7 +8,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -21,9 +24,18 @@ public class TaskController {
     }
 
     @PostMapping
-    public String createTask(@RequestParam String description) {
-        Task task = new Task(UUID.randomUUID().toString(), description);
-        taskQueue.addTask(task);
-        return "Task created: " + task.getId();
+    public String createTasks(@RequestParam String description) {
+        List<Task> tasks = Arrays.stream(description.split("\\s+"))
+                .filter(word -> !word.isEmpty())
+                .map(word -> new Task(UUID.randomUUID().toString(), word))
+                .collect(Collectors.toList());
+        
+        tasks.forEach(taskQueue::addTask);
+        
+        return String.format("Created %d tasks: %s", 
+            tasks.size(), 
+            tasks.stream()
+                .map(Task::getId)
+                .collect(Collectors.joining(", ")));
     }
 } 

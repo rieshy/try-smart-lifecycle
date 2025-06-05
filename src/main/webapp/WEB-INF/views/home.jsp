@@ -68,7 +68,7 @@
         <div class="task-form">
             <form id="taskForm">
                 <input type="text" id="taskDescription" class="task-input" 
-                       placeholder="Enter task description" required>
+                       placeholder="Enter task descriptions separated by spaces" required>
                 <button type="submit" class="submit-button">Add Task</button>
             </form>
         </div>
@@ -102,12 +102,16 @@
                 // Clear the input
                 document.getElementById('taskDescription').value = '';
                 
-                // Add task to the list
+                // Add tasks to the list
                 const taskList = document.getElementById('taskList');
-                const taskItem = document.createElement('div');
-                taskItem.className = 'task-item';
-                taskItem.textContent = description;
-                taskList.insertBefore(taskItem, taskList.firstChild);
+                const words = description.split(/\s+/).filter(word => word.length > 0);
+                
+                words.forEach(word => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'task-item';
+                    taskItem.textContent = word;
+                    taskList.insertBefore(taskItem, taskList.firstChild);
+                });
                 
             } catch (error) {
                 statusDiv.textContent = 'Error: ' + error.message;
