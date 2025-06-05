@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class TaskQueue {
@@ -20,6 +21,10 @@ public class TaskQueue {
 
     public Task takeTask() throws InterruptedException {
         return queue.take();
+    }
+
+    public Task pollTask(long timeout, TimeUnit unit) throws InterruptedException {
+        return queue.poll(timeout, unit);
     }
 
     public boolean isEmpty() {

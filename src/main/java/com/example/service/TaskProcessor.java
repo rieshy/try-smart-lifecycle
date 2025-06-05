@@ -9,6 +9,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class TaskProcessor implements SmartLifecycle {
@@ -39,6 +40,7 @@ public class TaskProcessor implements SmartLifecycle {
             logger.info("Stopping task processor...");
             try {
                 if (processorThread != null) {
+                    // Wait for the current task to complete
                     processorThread.join();
                 }
             } catch (InterruptedException e) {
@@ -73,7 +75,15 @@ public class TaskProcessor implements SmartLifecycle {
     private void processTasks() {
         while (running.get()) {
             try {
-                Task task = taskQueue.takeTask();
+                Task task = taskQueue.pollTask(1, TimeUnit.SECONDS);
+                if (task == null) {
+                    // No task available, check if we should continue
+                    if (!running.get()) {
+                        break;
+                    }
+                    continue;
+                }
+                
                 logger.info("Processing task: {}", task);
                 // Simulate task processing
                 Thread.sleep(2000);
