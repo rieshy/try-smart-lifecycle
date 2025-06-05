@@ -68,6 +68,7 @@ public class TaskProcessor implements SmartLifecycle {
                             logger.error("Worker was interrupted", e);
                         }
                     }
+                    logger.info("Worker finished");
                 });
             }
             
