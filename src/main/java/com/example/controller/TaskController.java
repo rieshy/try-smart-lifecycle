@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -27,7 +26,7 @@ public class TaskController {
     public String createTasks(@RequestParam String description) {
         List<Task> tasks = Arrays.stream(description.split("\\s+"))
                 .filter(word -> !word.isEmpty())
-                .map(word -> new Task(UUID.randomUUID().toString(), word))
+                .map(Task::new)
                 .collect(Collectors.toList());
         
         tasks.forEach(taskQueue::addTask);
@@ -35,7 +34,7 @@ public class TaskController {
         return String.format("Created %d tasks: %s", 
             tasks.size(), 
             tasks.stream()
-                .map(Task::getId)
+                .map(task -> task.getId().toString())
                 .collect(Collectors.joining(", ")));
     }
 } 

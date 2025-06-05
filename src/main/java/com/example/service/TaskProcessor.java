@@ -126,9 +126,11 @@ public class TaskProcessor implements SmartLifecycle {
             logger.info("Processing step 3 for task: {}", task);
             Thread.sleep(2000);
             logger.info("Processing completed for task: {}", task);
+            taskQueue.markTaskCompleted(task);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.error("Task processing was interrupted for task: {}", task, e);
+            taskQueue.markTaskFailed(task);
         }
     }
 } 
