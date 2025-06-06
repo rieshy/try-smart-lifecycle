@@ -41,7 +41,7 @@ public class WorkflowService implements SmartLifecycle {
     public void start() {
         synchronized (lifecycleLock) {
             if (!running) {
-                logger.info("Starting task processor with {} workers", numberOfWorkers);
+                logger.info("Starting workflow service with {} workers", numberOfWorkers);
                 
                 for (int i = 0; i < numberOfWorkers; i++) {
                     WorkflowWorker worker = new WorkflowWorker(taskQueue, "worker-" + i);
@@ -54,7 +54,7 @@ public class WorkflowService implements SmartLifecycle {
                 }
                 
                 running = true;
-                logger.info("Task processor started successfully");
+                logger.info("Workflow service started successfully");
             }
         }
     }
@@ -63,7 +63,7 @@ public class WorkflowService implements SmartLifecycle {
     public void stop() {
         synchronized (lifecycleLock) {
             if (running) {
-                logger.info("Stopping task processor gracefully");
+                logger.info("Stopping workflow service gracefully");
                 
                 // Signal all workers to stop accepting new tasks
                 workers.forEach(WorkflowWorker::shutdown);
@@ -92,7 +92,7 @@ public class WorkflowService implements SmartLifecycle {
                 workerThreads.clear();
                 running = false;
                 
-                logger.info("Task processor stopped successfully");
+                logger.info("Workflow service stopped successfully");
             }
         }
     }
@@ -176,7 +176,7 @@ public class WorkflowService implements SmartLifecycle {
     
     public void submitTask(WorkflowTask task) {
         if (!running) {
-            throw new IllegalStateException("TaskProcessor is not running");
+            throw new IllegalStateException("Workflow service is not running");
         }
         taskQueue.offer(task);
     }
