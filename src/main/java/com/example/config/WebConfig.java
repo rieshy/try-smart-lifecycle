@@ -17,7 +17,7 @@ import javax.servlet.Filter;
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = "com.example")
-@Import(JpaConfig.class)
+@Import({RedisConfig.class, WorkflowConfig.class})
 public class WebConfig implements WebMvcConfigurer {
 
     @Override
