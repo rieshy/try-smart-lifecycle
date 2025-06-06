@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/tasks")
+@RequestMapping("/api/workflows")
 public class TaskController {
     private final WorkflowService workflowService;
     
@@ -24,15 +24,15 @@ public class TaskController {
     }
 
     @PostMapping
-    public String createTasks(@RequestParam String userInput) {
-        List<WorkflowTask> tasks = Arrays.stream(userInput.split("\\s+"))
-                .filter(word -> !word.isEmpty())
-                .map(word -> new WorkflowStartTask(word, String.format("Start workflow with id %s", word)))
+    public String startWorkflows(@RequestParam String workflowIds) {
+        List<WorkflowTask> tasks = Arrays.stream(workflowIds.split("\\s+"))
+                .filter(workflowId -> !workflowId.isEmpty())
+                .map(workflowId -> new WorkflowStartTask(workflowId, String.format("Start workflow with id %s", workflowId)))
                 .collect(Collectors.toList());
         
         tasks.forEach(workflowService::submitTask);
         
-        return String.format("Created %d tasks: %s", 
+        return String.format("Started %d workflows: %s", 
             tasks.size(), 
             tasks.stream()
                 .map(task -> task.getWorkflowId())

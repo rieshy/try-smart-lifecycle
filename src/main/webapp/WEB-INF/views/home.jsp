@@ -22,10 +22,10 @@
             color: #333;
             margin-bottom: 20px;
         }
-        .task-form {
+        .start-workflow-form {
             margin-bottom: 20px;
         }
-        .task-input {
+        .workflow-ids-input {
             width: 70%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -43,10 +43,10 @@
         .submit-button:hover {
             background-color: #45a049;
         }
-        .task-list {
+        .workflows-list {
             margin-top: 20px;
         }
-        .task-item {
+        .workflow-item {
             padding: 10px;
             border: 1px solid #ddd;
             margin-bottom: 10px;
@@ -65,30 +65,30 @@
     <div class="container">
         <h1>Workflow Manager</h1>
         
-        <div class="task-form">
-            <form id="taskForm">
-                <input type="text" id="userInput" class="task-input" 
+        <div class="start-workflow-form">
+            <form id="start-workflow-form">
+                <input type="text" id="workflow-ids" class="workflow-ids-input" 
                        placeholder="Enter workflow IDs to start (separated by space)" required>
-                <button type="submit" class="submit-button">Add Task</button>
+                <button type="submit" class="submit-button">Start Workflows</button>
             </form>
         </div>
 
         <div id="status" class="status" style="display: none;"></div>
         
-        <div class="task-list" id="taskList">
+        <div class="workflows-list" id="workflows-list">
             <!-- Tasks will be added here dynamically -->
         </div>
     </div>
 
     <script>
-        document.getElementById('taskForm').addEventListener('submit', async function(e) {
+        document.getElementById('start-workflow-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const userInput = document.getElementById('userInput').value;
+            const workflowIdsValue = document.getElementById('workflow-ids').value;
             const statusDiv = document.getElementById('status');
             
             try {
-                const response = await fetch('/try-smart-lifecycle/api/tasks?userInput=' + encodeURIComponent(userInput), {
+                const response = await fetch('/try-smart-lifecycle/api/workflows?workflowIds=' + encodeURIComponent(workflowIdsValue), {
                     method: 'POST'
                 });
                 
@@ -100,17 +100,17 @@
                 statusDiv.style.backgroundColor = '#e8f5e9';
                 
                 // Clear the input
-                document.getElementById('taskDescription').value = '';
+                document.getElementById('workflow-ids').value = '';
                 
                 // Add tasks to the list
-                const taskList = document.getElementById('taskList');
-                const words = description.split(/\s+/).filter(word => word.length > 0);
+                const workflowsList = document.getElementById('workflows-list');
+                const workflowIds = workflowIdsValue.split(/\s+/).filter(word => word.length > 0);
                 
-                words.forEach(word => {
-                    const taskItem = document.createElement('div');
-                    taskItem.className = 'task-item';
-                    taskItem.textContent = word;
-                    taskList.insertBefore(taskItem, taskList.firstChild);
+                workflowIds.forEach(workflowId => {
+                    const workflowItem = document.createElement('div');
+                    workflowItem.className = 'workflow-item';
+                    workflowItem.textContent = workflowId;
+                    workflowsList.insertBefore(workflowItem, workflowsList.firstChild);
                 });
                 
             } catch (error) {
