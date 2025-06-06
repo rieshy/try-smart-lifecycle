@@ -1,8 +1,8 @@
 package com.example.controller;
 
 import com.example.model.WorkflowTask;
+import com.example.service.WorkflowService;
 import com.example.service.WorkflowStartTask;
-import com.example.service.WorkflowTaskQueue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,11 +16,11 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/tasks")
 public class TaskController {
-    private final WorkflowTaskQueue taskQueue;
+    private final WorkflowService workflowService;
     
     @Autowired
-    public TaskController(WorkflowTaskQueue taskQueue) {
-        this.taskQueue = taskQueue;
+    public TaskController(WorkflowService workflowService) {
+        this.workflowService = workflowService;
     }
 
     @PostMapping
@@ -30,7 +30,7 @@ public class TaskController {
                 .map(word -> new WorkflowStartTask(word, String.format("Start workflow with %s", word)))
                 .collect(Collectors.toList());
         
-        tasks.forEach(taskQueue::offer);
+        tasks.forEach(workflowService::submitTask);
         
         return String.format("Created %d tasks: %s", 
             tasks.size(), 
