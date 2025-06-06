@@ -1,8 +1,13 @@
 package com.example.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.example.model.WorkflowTask;
 
 public class WorkflowStartTask implements WorkflowTask {
+    private static final Logger logger = LoggerFactory.getLogger(WorkflowStartTask.class);
+
     private final String workflowId;
     private final String description;
 
@@ -13,7 +18,15 @@ public class WorkflowStartTask implements WorkflowTask {
 
     @Override
     public void execute() {
-        System.out.println("Starting new workflow...");
+        logger.info("Executing task: {}", description);
+        try {
+            for (int i = 0; i < 10; i++) {
+                logger.info("Executing step {} of task '{}'", i, description);
+                Thread.sleep(1000);
+            }
+        } catch (InterruptedException e) {
+            logger.error("Task got interrupted");
+        }
     }
 
     @Override

@@ -81,11 +81,11 @@ public class WorkflowWorker implements Runnable {
         currentTask.set(task);
         
         try {
-            logger.debug("Worker {} processing task {}", workerId, task.getWorkflowId());
+            logger.debug("Worker {} processing task '{}'", workerId, task);
             task.execute();
-            logger.debug("Worker {} completed task {}", workerId, task.getWorkflowId());
+            logger.debug("Worker {} completed task '{}'", workerId, task);
         } catch (Exception e) {
-            logger.error("Worker {} failed to process task {}", workerId, task.getWorkflowId(), e);
+            logger.error("Worker {} failed to process task '{}'", workerId, task, e);
         } finally {
             processingTask = false;
             currentTask.set(null);
