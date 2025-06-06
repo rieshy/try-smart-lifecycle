@@ -63,7 +63,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Task Queue Manager</h1>
+        <h1>Workflow Manager</h1>
         
         <div class="task-form">
             <form id="taskForm">
