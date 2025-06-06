@@ -67,8 +67,8 @@
         
         <div class="task-form">
             <form id="taskForm">
-                <input type="text" id="taskDescription" class="task-input" 
-                       placeholder="Enter task descriptions separated by spaces" required>
+                <input type="text" id="userInput" class="task-input" 
+                       placeholder="Enter workflow IDs to start (separated by space)" required>
                 <button type="submit" class="submit-button">Add Task</button>
             </form>
         </div>
@@ -84,11 +84,11 @@
         document.getElementById('taskForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const description = document.getElementById('taskDescription').value;
+            const userInput = document.getElementById('userInput').value;
             const statusDiv = document.getElementById('status');
             
             try {
-                const response = await fetch('/try-smart-lifecycle/api/tasks?description=' + encodeURIComponent(description), {
+                const response = await fetch('/try-smart-lifecycle/api/tasks?userInput=' + encodeURIComponent(userInput), {
                     method: 'POST'
                 });
                 

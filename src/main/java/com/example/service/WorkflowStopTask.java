@@ -3,11 +3,11 @@ package com.example.service;
 import com.example.model.WorkflowTask;
 
 public class WorkflowStopTask implements WorkflowTask {
-    private final String id;
+    private final String workflowId;
     private final String description;
 
-    public WorkflowStopTask(String id, String description) {
-        this.id = id;
+    public WorkflowStopTask(String workflowId, String description) {
+        this.workflowId = workflowId;
         this.description = description;
     }
     
@@ -22,8 +22,8 @@ public class WorkflowStopTask implements WorkflowTask {
     }
 
     @Override
-    public String getId() {
-        return id;
+    public String getWorkflowId() {
+        return workflowId;
     }
 
     @Override
@@ -33,6 +33,6 @@ public class WorkflowStopTask implements WorkflowTask {
 
     @Override
     public String toString() {
-        return String.format("WorkflowStopTask[id=%s, description=%s]", id, description);
+        return String.format("WorkflowStopTask[workflowId=%s, description=%s]", workflowId, description);
     }
 }

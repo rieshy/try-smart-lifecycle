@@ -27,7 +27,7 @@ public class TaskController {
     public String createTasks(@RequestParam String userInput) {
         List<WorkflowTask> tasks = Arrays.stream(userInput.split("\\s+"))
                 .filter(word -> !word.isEmpty())
-                .map(word -> new WorkflowStartTask(word, String.format("Start workflow with %s", word)))
+                .map(word -> new WorkflowStartTask(word, String.format("Start workflow with id %s", word)))
                 .collect(Collectors.toList());
         
         tasks.forEach(workflowService::submitTask);
@@ -35,7 +35,7 @@ public class TaskController {
         return String.format("Created %d tasks: %s", 
             tasks.size(), 
             tasks.stream()
-                .map(task -> task.getId().toString())
+                .map(task -> task.getWorkflowId())
                 .collect(Collectors.joining(", ")));
     }
 } 

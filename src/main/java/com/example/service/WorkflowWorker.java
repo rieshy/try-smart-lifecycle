@@ -42,7 +42,7 @@ public class WorkflowWorker implements Runnable {
                     if (task != null) {
                         // Check again if shutdown was requested while polling
                         if (shutdown) {
-                            logger.info("Worker {} received shutdown signal, not processing new task {}", workerId, task.getId());
+                            logger.info("Worker {} received shutdown signal, not processing new task {}", workerId, task.getWorkflowId());
                             break;
                         }
                         
@@ -81,11 +81,11 @@ public class WorkflowWorker implements Runnable {
         currentTask.set(task);
         
         try {
-            logger.debug("Worker {} processing task {}", workerId, task.getId());
+            logger.debug("Worker {} processing task {}", workerId, task.getWorkflowId());
             task.execute();
-            logger.debug("Worker {} completed task {}", workerId, task.getId());
+            logger.debug("Worker {} completed task {}", workerId, task.getWorkflowId());
         } catch (Exception e) {
-            logger.error("Worker {} failed to process task {}", workerId, task.getId(), e);
+            logger.error("Worker {} failed to process task {}", workerId, task.getWorkflowId(), e);
         } finally {
             processingTask = false;
             currentTask.set(null);

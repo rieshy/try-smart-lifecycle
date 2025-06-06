@@ -149,7 +149,7 @@ public class WorkflowService implements SmartLifecycle {
                         WorkflowTask currentTask = worker.getCurrentTask();
                         if (currentTask != null) {
                             logger.info("Waiting for task {} to complete on worker {}", 
-                                      currentTask.getId(), worker.getWorkerId());
+                                      currentTask.getWorkflowId(), worker.getWorkerId());
                         }
                     });
             }
