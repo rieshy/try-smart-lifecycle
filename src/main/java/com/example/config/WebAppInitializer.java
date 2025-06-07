@@ -7,7 +7,7 @@ public class WebAppInitializer extends AbstractAnnotationConfigDispatcherServlet
 
     @Override
     protected Class<?>[] getRootConfigClasses() {
-        return new Class<?>[] { RedisConfig.class, WorkflowConfig.class };
+        return new Class<?>[] { AppConfig.class };
     }
 
     @Override

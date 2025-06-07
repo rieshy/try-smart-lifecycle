@@ -4,7 +4,6 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -19,7 +18,6 @@ import io.netty.util.concurrent.FastThreadLocal;
 import io.netty.util.internal.InternalThreadLocalMap;
 
 @Configuration
-@PropertySource("classpath:application.properties")
 public class RedisConfig implements DisposableBean {
     private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
     
@@ -76,7 +74,7 @@ public class RedisConfig implements DisposableBean {
         
         logger.info("Shutting down Redis resources...");
         
-        // First, clean up Netty ThreadLocal resources
+        // First, clean up Netty ThreadLocal resources to avoid memory leaks
         try {
             FastThreadLocal.removeAll();
             InternalThreadLocalMap.destroy();
