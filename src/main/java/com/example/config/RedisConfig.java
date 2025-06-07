@@ -88,28 +88,11 @@ public class RedisConfig implements DisposableBean {
         // Then shut down client resources
         try {
             if (clientResources != null) {
-                clientResources.shutdown();
+                clientResources.shutdown().get();
                 logger.info("Lettuce client resources shut down");
             }
         } catch (Exception e) {
             logger.warn("Error shutting down Lettuce client resources", e);
         }
-        
-        // Finally, destroy the connection factory
-        try {
-            if (connectionFactory != null) {
-                connectionFactory.destroy();
-                logger.info("Lettuce connection factory destroyed");
-            }
-        } catch (Exception e) {
-            logger.warn("Error destroying Lettuce connection factory", e);
-        }
-        
-        // Log any remaining threads for debugging
-        Thread.getAllStackTraces().keySet().forEach(thread -> {
-            if (thread.getName().contains("lettuce") || thread.getName().contains("netty")) {
-                logger.info("Remaining thread: {}, classloader: {}", thread.getName(), thread.getContextClassLoader());
-            }
-        });
     }
 }
