@@ -1,5 +1,6 @@
 package com.example.service;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.model.WorkflowTask;
 
-@Component
+@Component("redisWorkflowTaskQueue")
 public class RedisWorkflowTaskQueue implements WorkflowTaskQueue {
     private final RedisTemplate<String, Object> redisTemplate;
     private final String queueKey = "workflow_task_queue";
@@ -43,5 +44,11 @@ public class RedisWorkflowTaskQueue implements WorkflowTaskQueue {
     @Override
     public void notifyWorkers() {
         redisTemplate.convertAndSend(notificationChannel, "new_task");
+    }
+
+    @Override
+    public String toString() {
+        List<Object> elements = redisTemplate.opsForList().range(queueKey, 0, 9);
+        return "RedisWorkflowTaskQueue[queueKey=" + queueKey + ", notificationChannel=" + notificationChannel + ", elements=" + elements + "]";
     }
 }
