@@ -9,4 +9,5 @@ public interface WorkflowTaskQueue {
     void offer(WorkflowTask task);
     boolean isEmpty();
     void notifyWorkers(); // For distributed notifications
+    String toString();
 }
