@@ -8,12 +8,50 @@ import com.example.model.WorkflowTask;
 public class WorkflowStartTask implements WorkflowTask {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowStartTask.class);
 
-    private final String workflowId;
-    private final String description;
+    private WorkflowAction action;
+    private String workflowId;
+    private String description;
+
+    public WorkflowStartTask() {
+        this.action = WorkflowAction.START;
+    }
 
     public WorkflowStartTask(String workflowId, String description) {
+        this();
         this.workflowId = workflowId;
         this.description = description;
+    }
+
+    @Override
+    public WorkflowAction getAction() {
+        return action;
+    }
+
+    public void setAction(WorkflowAction action) {
+        this.action = action;
+    }
+
+    @Override
+    public String getWorkflowId() {
+        return workflowId;
+    }
+
+    public void setWorkflowId(String workflowId) {
+        this.workflowId = workflowId;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("WorkflowStartTask[workflowId=%s, description=%s]", workflowId, description);
     }
 
     @Override
@@ -27,25 +65,5 @@ public class WorkflowStartTask implements WorkflowTask {
         } catch (InterruptedException e) {
             logger.error("Task got interrupted");
         }
-    }
-
-    @Override
-    public WorkflowAction getAction() {
-        return WorkflowAction.START;
-    }
-
-    @Override
-    public String getWorkflowId() {
-        return workflowId;
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("WorkflowStartTask[workflowId=%s, description=%s]", workflowId, description);
     }
 }
