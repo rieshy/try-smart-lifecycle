@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.example.model.WorkflowTask;
-import io.netty.util.internal.InternalThreadLocalMap;
 
 @Service
 public class WorkflowService implements SmartLifecycle {
@@ -92,14 +91,6 @@ public class WorkflowService implements SmartLifecycle {
                 workers.clear();
                 workerThreads.clear();
                 running = false;
-                
-                // Clean up Netty's ThreadLocal resources
-                try {
-                    InternalThreadLocalMap.destroy();
-                    logger.info("Cleaned up Netty ThreadLocal resources");
-                } catch (Exception e) {
-                    logger.warn("Failed to clean up Netty ThreadLocal resources", e);
-                }
                 
                 logger.info("Workflow service stopped successfully");
             }
