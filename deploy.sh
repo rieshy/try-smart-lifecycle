@@ -69,6 +69,12 @@ if ! mvn clean package; then
 fi
 echo "Build completed successfully"
 
+# Remove the existing WAR file and directory
+echo "Removing existing WAR file and directory..."
+rm -rf "$TOMCAT_HOME/webapps/$APP_NAME.war"
+rm -rf "$TOMCAT_HOME/webapps/$APP_NAME"
+echo "Removed existing WAR file and directory"
+
 # Deploy the WAR
 echo "Deploying WAR file..."
 cp "target/$APP_NAME-1.0-SNAPSHOT.war" "$TOMCAT_HOME/webapps/$APP_NAME.war"
