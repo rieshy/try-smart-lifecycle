@@ -15,7 +15,10 @@ import javax.servlet.Filter;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = "com.example.controller")
+@ComponentScan(basePackages = {
+    "com.example.controller",
+    "com.example.service" // Needed for lifecycle management
+})
 public class WebConfig implements WebMvcConfigurer {
 
     @Override
