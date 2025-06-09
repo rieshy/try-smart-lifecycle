@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -22,11 +23,23 @@ public class RedisWorkflowTaskQueue implements WorkflowTaskQueue {
 
     @Override
     public WorkflowTask poll(long timeout, TimeUnit unit) throws InterruptedException {
-        Object result = redisTemplate.opsForList().rightPop(queueKey, timeout, unit);
-        if (result != null) {
-            return (WorkflowTask) result;
+        try {
+            Object result = redisTemplate.opsForList().rightPop(queueKey, timeout, unit);
+            if (result != null) {
+                return (WorkflowTask) result;
+            }
+            return null;
+        } catch (RedisSystemException e) {
+            // Look for InterruptedException in the cause chain
+            Throwable cause = e;
+            while (cause != null) {
+                if (cause instanceof InterruptedException) {
+                    throw (InterruptedException) cause;
+                }
+                cause = cause.getCause();
+            }
+            throw e;
         }
-        return null;
     }
 
     @Override
