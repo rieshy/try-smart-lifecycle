@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;   
 
 @ComponentScan(basePackages = {
-    "com.example.service",
-    "com.example.config"
+    "com.example.config",
+    "com.example.service"
 })
 @PropertySource("classpath:application.properties")
 @Configuration
