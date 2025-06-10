@@ -1,5 +1,12 @@
 package com.example.config;
 
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.DefaultClientResources;
+import io.netty.util.concurrent.FastThreadLocal;
+import io.netty.util.internal.InternalThreadLocalMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -9,31 +16,23 @@ import org.springframework.data.redis.connection.lettuce.LettuceClientConfigurat
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import io.lettuce.core.ClientOptions;
-import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.DefaultClientResources;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import io.netty.util.concurrent.FastThreadLocal;
-import io.netty.util.internal.InternalThreadLocalMap;
 
 @Configuration
 public class RedisConfig implements DisposableBean {
     private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
-    
+
     private ClientResources clientResources;
-    private LettuceConnectionFactory connectionFactory;
     private volatile boolean destroyed = false;
-    
+
     @Bean
     public ClientResources clientResources() {
         clientResources = DefaultClientResources.builder()
-            .ioThreadPoolSize(4)
-            .computationThreadPoolSize(4)
-            .build();
+                .ioThreadPoolSize(4)
+                .computationThreadPoolSize(4)
+                .build();
         return clientResources;
     }
-    
+
     @Bean
     public LettuceConnectionFactory redisConnectionFactory(
             @Value("${redis.host:localhost}") String host,
@@ -42,21 +41,20 @@ public class RedisConfig implements DisposableBean {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
         redisStandaloneConfiguration.setHostName(host);
         redisStandaloneConfiguration.setPort(port);
-        
+
         ClientOptions clientOptions = ClientOptions.builder()
-            .autoReconnect(false)
-            .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
-            .build();
-            
+                .autoReconnect(false)
+                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
+                .build();
+
         LettuceClientConfiguration lettuceClientConfiguration = LettuceClientConfiguration.builder()
-            .clientOptions(clientOptions)
-            .clientResources(clientResources)
-            .build();
-            
-        connectionFactory = new LettuceConnectionFactory(redisStandaloneConfiguration, lettuceClientConfiguration);
-        return connectionFactory;
+                .clientOptions(clientOptions)
+                .clientResources(clientResources)
+                .build();
+
+        return new LettuceConnectionFactory(redisStandaloneConfiguration, lettuceClientConfiguration);
     }
-    
+
     @Bean
     public RedisTemplate<String, Object> redisTemplate(LettuceConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -64,17 +62,17 @@ public class RedisConfig implements DisposableBean {
         template.setDefaultSerializer(new GenericJackson2JsonRedisSerializer());
         return template;
     }
-    
+
     @Override
     public void destroy() {
         if (destroyed) {
             return;
         }
         destroyed = true;
-        
+
         logger.info("Shutting down Redis resources...");
-        
-        // First, clean up Netty ThreadLocal resources to avoid memory leaks
+
+        // First, clean up Netty ThreadLocal resources
         try {
             FastThreadLocal.removeAll();
             InternalThreadLocalMap.destroy();
@@ -82,7 +80,7 @@ public class RedisConfig implements DisposableBean {
         } catch (Exception e) {
             logger.warn("Error cleaning up Netty ThreadLocal resources", e);
         }
-        
+
         // Then shut down client resources
         try {
             if (clientResources != null) {
