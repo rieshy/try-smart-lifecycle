@@ -179,7 +179,6 @@ public class WorkflowService implements SmartLifecycle {
             throw new IllegalStateException("Workflow service is not running");
         }
         taskQueue.offer(task);
-        logger.debug("Task queue: {}", taskQueue);
     }
     
     public WorkflowServiceStatus getStatus() {
