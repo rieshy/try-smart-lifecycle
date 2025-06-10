@@ -163,7 +163,7 @@ public class WorkflowService implements SmartLifecycle {
             }
         }
         
-        // Log if we timed out waiting
+        // Log if waiting timed out
         long runningTasks = workers.stream()
             .mapToLong(worker -> worker.isProcessingTask() ? 1 : 0)
             .sum();

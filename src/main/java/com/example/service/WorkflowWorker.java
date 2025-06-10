@@ -59,7 +59,7 @@ public class WorkflowWorker implements Runnable {
                 // Handle interruption gracefully - check if we're processing a task
                 if (processingTask) {
                     logger.warn("Worker {} got interrupted while processing task, allowing current task to complete", workerId);
-                    // Don't break the loop immediately, let current task finish
+                    // Don't break the loop immediately, let the current task finish
                     // Set shutdown flag so we don't pick up new tasks
                     shutdown = true;
                 } else {
