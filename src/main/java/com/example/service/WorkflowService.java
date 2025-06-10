@@ -43,7 +43,7 @@ public class WorkflowService implements SmartLifecycle {
             if (!running) {
                 logger.info("Starting workflow service with {} workers", numberOfWorkers);
                 
-                for (int i = 0; i < numberOfWorkers; i++) {
+                for (int i = 1; i <= numberOfWorkers; i++) {
                     WorkflowWorker worker = new WorkflowWorker(taskQueue, String.valueOf(i));
                     Thread workerThread = new Thread(worker, "workflow-worker-" + i);
                     
