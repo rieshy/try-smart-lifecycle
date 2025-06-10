@@ -8,6 +8,5 @@ public interface WorkflowTaskQueue {
     WorkflowTask poll(long timeout, TimeUnit unit) throws InterruptedException;
     void offer(WorkflowTask task);
     boolean isEmpty();
-    void notifyWorkers(); // For distributed notifications
     String toString();
 }

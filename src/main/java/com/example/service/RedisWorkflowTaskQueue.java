@@ -14,7 +14,6 @@ import com.example.model.WorkflowTask;
 public class RedisWorkflowTaskQueue implements WorkflowTaskQueue {
     private final RedisTemplate<String, Object> redisTemplate;
     private final String queueKey = "workflow_task_queue";
-    private final String notificationChannel = "workflow_notification";
     
     @Autowired
     public RedisWorkflowTaskQueue(RedisTemplate<String, Object> redisTemplate) {
@@ -45,7 +44,6 @@ public class RedisWorkflowTaskQueue implements WorkflowTaskQueue {
     @Override
     public void offer(WorkflowTask task) {
         redisTemplate.opsForList().leftPush(queueKey, task);
-        notifyWorkers();
     }
 
     @Override
@@ -55,13 +53,8 @@ public class RedisWorkflowTaskQueue implements WorkflowTaskQueue {
     }
 
     @Override
-    public void notifyWorkers() {
-        redisTemplate.convertAndSend(notificationChannel, "new_task");
-    }
-
-    @Override
     public String toString() {
         List<Object> elements = redisTemplate.opsForList().range(queueKey, 0, 9);
-        return "RedisWorkflowTaskQueue[queueKey=" + queueKey + ", notificationChannel=" + notificationChannel + ", elements=" + elements + "]";
+        return "RedisWorkflowTaskQueue[queueKey=" + queueKey + ", elements(0-9)=" + elements + "]";
     }
 }

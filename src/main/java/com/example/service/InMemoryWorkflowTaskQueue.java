@@ -21,17 +21,14 @@ public class InMemoryWorkflowTaskQueue implements WorkflowTaskQueue {
     
     @Override
     public void offer(WorkflowTask task) {
-        queue.offer(task);
+        if (!queue.offer(task)) {
+            throw new IllegalStateException("Failed to add task to the queue: " + task);
+        }
     }
     
     @Override
     public boolean isEmpty() {
         return queue.isEmpty();
-    }
-    
-    @Override
-    public void notifyWorkers() {
-        // No-op for in-memory queue as BlockingQueue handles notifications
     }
 
     @Override
