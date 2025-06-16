@@ -205,6 +205,44 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
         return new WorkflowServiceStatus(numberOfWorkers, runningTasks, taskQueue.isEmpty(), running);
     }
 
+    /**
+     * Waits until the workflow service becomes idle (no running tasks and empty queue).
+     * This method is useful for testing scenarios where you need to ensure all tasks
+     * are completed before proceeding.
+     *
+     * @param timeoutSeconds maximum time to wait in seconds
+     * @return true if the service became idle within the timeout period, false otherwise
+     * @throws InterruptedException if the waiting thread is interrupted
+     */
+    public boolean waitUntilIdle(int timeoutSeconds) throws InterruptedException {
+        if (!running) {
+            throw new IllegalStateException("Workflow service is not running");
+        }
+
+        long maxWaitTime = timeoutSeconds * 1000L;
+        long startTime = System.currentTimeMillis();
+
+        while (System.currentTimeMillis() - startTime < maxWaitTime) {
+            WorkflowServiceStatus status = getStatus();
+            if (status.isQueueEmpty() && status.getRunningTasks() == 0) {
+                return true;
+            }
+
+            // Log current status every 5 seconds
+            if ((System.currentTimeMillis() - startTime) % 5000 < 1000) {
+                logger.info("Waiting for workflow to become idle. Current status: {} running tasks, queue empty: {}",
+                        status.getRunningTasks(), status.isQueueEmpty());
+            }
+
+            Thread.sleep(1000); // Check every second
+        }
+
+        WorkflowServiceStatus finalStatus = getStatus();
+        logger.warn("Timed out waiting for workflow to become idle. Final status: {} running tasks, queue empty: {}",
+                finalStatus.getRunningTasks(), finalStatus.isQueueEmpty());
+        return false;
+    }
+
     @Override
     public void destroy() {
         logger.info("Destroying Workflow Service");
