@@ -13,7 +13,7 @@ import com.example.model.WorkflowTask;
 @Component("redisWorkflowTaskQueue")
 public class RedisWorkflowTaskQueue implements WorkflowTaskQueue {
     private final RedisTemplate<String, Object> redisTemplate;
-    private final String queueKey = "workflow_task_queue";
+    private final String queueKey = "workflow:task:queue";
     
     @Autowired
     public RedisWorkflowTaskQueue(RedisTemplate<String, Object> redisTemplate) {
