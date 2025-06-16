@@ -42,7 +42,8 @@ public class WorkflowWorker implements Runnable {
                     if (task != null) {
                         // Check again if shutdown was requested while polling
                         if (shutdown) {
-                            logger.info("Worker {} received shutdown signal, not processing new task {}", workerId, task.getWorkflowId());
+                            logger.info("Worker {} received shutdown signal, returning unprocessed task {} to the queue", workerId, task);
+                            taskQueue.offer(task);  // Return task to queue
                             break;
                         }
                         
