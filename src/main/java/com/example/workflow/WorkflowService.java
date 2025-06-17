@@ -1,6 +1,5 @@
-package com.example.service;
+package com.example.workflow;
 
-import com.example.model.WorkflowTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -12,11 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
 
 @Service
 public class WorkflowService implements SmartLifecycle, DisposableBean {
@@ -27,6 +22,7 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
     private final List<Thread> workerThreads = new ArrayList<>();
     private final int numberOfWorkers;
     private final int shutdownTimeoutSeconds;
+    private final WorkflowMessageBroker messageBroker;
 
     // Use a dedicated executor instead of ForkJoinPool.commonPool()
     private final ExecutorService stopExecutor;
@@ -37,10 +33,12 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
     @Autowired
     public WorkflowService(WorkflowTaskQueue taskQueue,
                            @Value("${app.workflow.worker.count:3}") int numberOfWorkers,
-                           @Value("${app.workflow.shutdown.timeout.seconds:30}") int shutdownTimeoutSeconds) {
+                           @Value("${app.workflow.shutdown.timeout.seconds:30}") int shutdownTimeoutSeconds,
+                           WorkflowMessageBroker messageBroker) {
         this.taskQueue = taskQueue;
         this.numberOfWorkers = numberOfWorkers;
         this.shutdownTimeoutSeconds = shutdownTimeoutSeconds;
+        this.messageBroker = messageBroker;
 
         // Create a dedicated single-thread executor for stop operations
         this.stopExecutor = Executors.newSingleThreadExecutor(r -> {
@@ -57,7 +55,7 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
                 logger.info("Starting workflow service with {} workers", numberOfWorkers);
 
                 for (int i = 1; i <= numberOfWorkers; i++) {
-                    WorkflowWorker worker = new WorkflowWorker(taskQueue, String.valueOf(i));
+                    WorkflowWorker worker = new WorkflowWorker(taskQueue, String.valueOf(i), messageBroker);
                     Thread workerThread = new Thread(worker, "Workflow Worker " + i);
 
                     workers.add(worker);
@@ -162,7 +160,7 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
                             WorkflowTask currentTask = worker.getCurrentTask();
                             if (currentTask != null) {
                                 logger.info("Waiting for task {} to complete on worker {}",
-                                        currentTask.getWorkflowId(), worker.getWorkerId());
+                                        currentTask, worker.getWorkerId());
                             }
                         });
             }
@@ -194,61 +192,15 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
         taskQueue.offer(task);
     }
 
-    public WorkflowServiceStatus getStatus() {
+    public CountDownLatch submitTaskAndWait(WorkflowTask task) {
         if (!running) {
-            return new WorkflowServiceStatus(0, 0, true, false);
+            throw new IllegalStateException("Workflow service is not running");
         }
 
-        long runningTasks = workers.stream()
-                .mapToLong(worker -> worker.isProcessingTask() ? 1 : 0)
-                .sum();
+        CountDownLatch latch = messageBroker.listenForTaskDone(task);
+        taskQueue.offer(task);
 
-        return new WorkflowServiceStatus(numberOfWorkers, runningTasks, taskQueue.isEmpty(), running);
-    }
-
-    /**
-     * Waits until the workflow service becomes idle (no running tasks and empty queue).
-     * This method is useful for testing scenarios where you need to ensure all tasks
-     * are completed before proceeding.
-     *
-     * @param timeoutSeconds maximum time to wait in seconds
-     * @return true if the service became idle within the timeout period, false otherwise
-     * @throws InterruptedException if the waiting thread is interrupted
-     */
-    public boolean waitUntilIdle(int timeoutSeconds) throws InterruptedException {
-        if (!running) {
-            return true; // If service is not running, it's considered idle
-        }
-
-        long maxWaitTime = timeoutSeconds * 1000L;
-        long startTime = System.currentTimeMillis();
-
-        while (System.currentTimeMillis() - startTime < maxWaitTime) {
-            Thread.sleep(1000);
-
-            boolean isQueueEmpty = taskQueue.isEmpty();
-            long runningTasks = 0;
-            if (isQueueEmpty) {
-                runningTasks = workers.stream()
-                        .mapToLong(worker -> worker.isProcessingTask() ? 1 : 0)
-                        .sum();
-                if (runningTasks == 0) {
-                    logger.info("Workflow service is idle with no running tasks and empty queue.");
-                    return true;
-                }
-            }
-
-            // Log current status every 5 seconds
-            if ((System.currentTimeMillis() - startTime) % 5000 < 1000) {
-                logger.info("Waiting for workflow to become idle. Current status: {} running tasks, queue empty: {}",
-                        runningTasks, isQueueEmpty);
-            }
-        }
-
-        WorkflowServiceStatus finalStatus = getStatus();
-        logger.warn("Timed out waiting for workflow to become idle. Final status: {} running tasks, queue empty: {}",
-                finalStatus.getRunningTasks(), finalStatus.isQueueEmpty());
-        return false;
+        return latch;
     }
 
     @Override
@@ -274,14 +226,5 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
         }
 
         logger.info("Workflow Service destroyed");
-    }
-
-    /**
-     * Submits a task and blocks until it is processed.
-     */
-    public void submitTaskAndWait(WorkflowTask task) throws InterruptedException {
-        BlockingWorkflowTask blockingTask = new BlockingWorkflowTask(task);
-        submitTask(blockingTask);
-        blockingTask.awaitCompletion();
     }
 }

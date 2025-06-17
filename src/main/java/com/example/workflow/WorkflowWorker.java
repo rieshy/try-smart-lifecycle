@@ -1,6 +1,5 @@
-package com.example.service;
+package com.example.workflow;
 
-import com.example.model.WorkflowTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,15 +15,17 @@ public class WorkflowWorker implements Runnable {
     private volatile boolean shutdown = false;
     private final CountDownLatch shutdownLatch = new CountDownLatch(1);
     private final AtomicReference<WorkflowTask> currentTask = new AtomicReference<>();
+    private final WorkflowMessageBroker messageBroker;
 
     // Adaptive polling configuration
     private static final long INITIAL_POLL_TIMEOUT = 1000; // 1 second
     private static final long MAX_POLL_TIMEOUT = 30000;    // 30 seconds
     private long currentPollTimeout = INITIAL_POLL_TIMEOUT;
 
-    public WorkflowWorker(WorkflowTaskQueue taskQueue, String workerId) {
+    public WorkflowWorker(WorkflowTaskQueue taskQueue, String workerId, WorkflowMessageBroker messageBroker) {
         this.taskQueue = taskQueue;
         this.workerId = workerId;
+        this.messageBroker = messageBroker;
     }
 
     @Override
@@ -80,11 +81,10 @@ public class WorkflowWorker implements Runnable {
             logger.info("Worker {} processing task '{}'", workerId, task);
             task.execute();
             logger.info("Worker {} completed task '{}'", workerId, task);
-            if (task instanceof BlockingWorkflowTask) {
-                ((BlockingWorkflowTask) task).complete();
-            }
         } catch (Exception e) {
             logger.error("Worker {} failed to process task '{}'", workerId, task, e);
+        } finally {
+            messageBroker.publishTaskDone(task);
         }
     }
 

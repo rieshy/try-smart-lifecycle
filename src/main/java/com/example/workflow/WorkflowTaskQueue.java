@@ -1,8 +1,6 @@
-package com.example.service;
+package com.example.workflow;
 
 import java.util.concurrent.TimeUnit;
-
-import com.example.model.WorkflowTask;
 
 public interface WorkflowTaskQueue {
     WorkflowTask poll(long timeout, TimeUnit unit) throws InterruptedException;

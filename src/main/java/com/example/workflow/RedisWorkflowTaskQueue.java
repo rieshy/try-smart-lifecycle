@@ -1,4 +1,4 @@
-package com.example.service;
+package com.example.workflow;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-
-import com.example.model.WorkflowTask;
 
 @Component("redisWorkflowTaskQueue")
 public class RedisWorkflowTaskQueue implements WorkflowTaskQueue {
