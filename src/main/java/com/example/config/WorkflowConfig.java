@@ -30,7 +30,7 @@ public class WorkflowConfig {
             logger.info("Using Redis for workflow task queue");
             return redisWorkflowTaskQueue;
         }
-        logger.info("Using  local memory for workflow task queue");
+        logger.info("Using local memory for workflow task queue");
         return localWorkflowTaskQueue;
     }
 
