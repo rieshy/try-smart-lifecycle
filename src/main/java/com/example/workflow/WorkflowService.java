@@ -192,16 +192,28 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
         taskQueue.offer(task);
     }
 
-    public CountDownLatch submitTaskAndWait(WorkflowTask task) {
+    public void submitTaskAndWait(WorkflowTask task) throws InterruptedException {
         if (!running) {
             throw new IllegalStateException("Workflow service is not running");
         }
 
         CountDownLatch latch = messageBroker.listenForTaskDone(task);
         taskQueue.offer(task);
-
-        return latch;
+        latch.await();
     }
+
+    public void submitTaskAndWait(WorkflowTask task, long timeout, TimeUnit unit) throws InterruptedException {
+        if (!running) {
+            throw new IllegalStateException("Workflow service is not running");
+        }
+
+        CountDownLatch latch = messageBroker.listenForTaskDone(task);
+        taskQueue.offer(task);
+        if (!latch.await(timeout, unit)) {
+            throw new InterruptedException("Timed out waiting for task completion");
+        }
+    }
+
 
     @Override
     public void destroy() {

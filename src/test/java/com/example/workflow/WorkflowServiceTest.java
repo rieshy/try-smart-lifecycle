@@ -16,6 +16,6 @@ public class WorkflowServiceTest {
     @Test
     public void startWorkflow() throws InterruptedException {
         StartWorkflowTask task = new StartWorkflowTask("Start workflow 123");
-        workflowService.submitTaskAndWait(task).await();
+        workflowService.submitTaskAndWait(task);
     }
 } 
