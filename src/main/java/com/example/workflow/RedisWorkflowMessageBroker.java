@@ -1,6 +1,8 @@
 package com.example.workflow;
 
 import com.example.config.AppConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -12,6 +14,8 @@ import java.util.concurrent.CountDownLatch;
 
 @Component("redisWorkflowMessageBroker")
 public class RedisWorkflowMessageBroker implements WorkflowMessageBroker {
+    private static final Logger logger = LogManager.getLogger();
+
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedisMessageListenerContainer redisMessageListenerContainer;
 
@@ -32,13 +36,17 @@ public class RedisWorkflowMessageBroker implements WorkflowMessageBroker {
         MessageListener messageListener = new MessageListener() {
             @Override
             public void onMessage(Message message, byte[] pattern) {
-                if (message.toString().equals("done")) {
+                String payload = redisTemplate.getStringSerializer().deserialize(message.getBody());
+                logger.info("Received message on channel {}: {}", channel, payload);
+                if ("\"done\"".equals(payload)) {
+                    logger.info("Task done notification received for task ID: {}", task.getId());
                     latch.countDown();
                     redisMessageListenerContainer.removeMessageListener(this, topic);
                 }
             }
         };
         redisMessageListenerContainer.addMessageListener(messageListener, topic);
+        logger.info("Listening for task done on channel: {}", channel);
 
         return latch;
     }
@@ -50,5 +58,6 @@ public class RedisWorkflowMessageBroker implements WorkflowMessageBroker {
         }
         String channel = AppConfig.APP_NAME + ":workflow:done:" + task.getId();
         redisTemplate.convertAndSend(channel, "done");
+        logger.info("Published task done notification for task ID: {} on channel: {}", task.getId(), channel);
     }
 }
