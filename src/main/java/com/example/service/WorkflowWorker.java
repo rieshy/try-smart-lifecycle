@@ -1,13 +1,12 @@
 package com.example.service;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
+import com.example.model.WorkflowTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.model.WorkflowTask;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class WorkflowWorker implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowWorker.class);
@@ -15,7 +14,6 @@ public class WorkflowWorker implements Runnable {
     private final WorkflowTaskQueue taskQueue;
     private final String workerId;
     private volatile boolean shutdown = false;
-    private volatile boolean processingTask = false;
     private final CountDownLatch shutdownLatch = new CountDownLatch(1);
     private final AtomicReference<WorkflowTask> currentTask = new AtomicReference<>();
 
@@ -28,37 +26,37 @@ public class WorkflowWorker implements Runnable {
         this.taskQueue = taskQueue;
         this.workerId = workerId;
     }
-    
+
     @Override
     public void run() {
         logger.info("Worker {} started", workerId);
-        
+
         while (!shutdown) {
             try {
                 // Only poll if not shutting down
                 if (!shutdown) {
-                    WorkflowTask task = taskQueue.poll(currentPollTimeout, TimeUnit.MILLISECONDS);
-                    
-                    if (task != null) {
+                    currentTask.set(taskQueue.poll(currentPollTimeout, TimeUnit.MILLISECONDS));
+                    if (currentTask.get() != null) {
                         // Check again if shutdown was requested while polling
                         if (shutdown) {
-                            logger.info("Worker {} received shutdown signal, returning unprocessed task {} to the queue", workerId, task);
-                            taskQueue.offer(task);  // Return task to queue
+                            logger.info("Worker {} received shutdown signal, returning unprocessed task {} to the queue", workerId, currentTask.get());
+                            taskQueue.offer(currentTask.get());
                             break;
                         }
-                        
-                        // Reset poll timeout when task is found
+
+                        // Reset poll timeout when the task is received
                         currentPollTimeout = INITIAL_POLL_TIMEOUT;
-                        processTask(task);
+                        processTask(currentTask.get());
+                        currentTask.set(null);
                     } else {
                         // Gradually increase poll timeout to reduce CPU usage
                         adaptPollTimeout();
                     }
                 }
-                
+
             } catch (InterruptedException e) {
                 // Handle interruption gracefully - check if we're processing a task
-                if (processingTask) {
+                if (currentTask.get() != null) {
                     logger.warn("Worker {} got interrupted while processing task, allowing current task to complete", workerId);
                     // Don't break the loop immediately, let the current task finish
                     // Set shutdown flag so we don't pick up new tasks
@@ -72,24 +70,18 @@ public class WorkflowWorker implements Runnable {
                 logger.error("Error in worker {}", workerId, e);
             }
         }
-        
+
         logger.info("Worker {} stopped", workerId);
         shutdownLatch.countDown();
     }
 
     private void processTask(WorkflowTask task) {
-        processingTask = true;
-        currentTask.set(task);
-        
         try {
             logger.info("Worker {} processing task '{}'", workerId, task);
             task.execute();
             logger.info("Worker {} completed task '{}'", workerId, task);
         } catch (Exception e) {
             logger.error("Worker {} failed to process task '{}'", workerId, task, e);
-        } finally {
-            processingTask = false;
-            currentTask.set(null);
         }
     }
 
@@ -102,19 +94,19 @@ public class WorkflowWorker implements Runnable {
         logger.info("Worker {} received shutdown signal", workerId);
         shutdown = true;
     }
-    
+
     public boolean isProcessingTask() {
-        return processingTask;
+        return currentTask.get() != null;
     }
-    
+
     public WorkflowTask getCurrentTask() {
         return currentTask.get();
     }
-    
+
     public String getWorkerId() {
         return workerId;
     }
-    
+
     public boolean awaitShutdown(long timeout, TimeUnit unit) throws InterruptedException {
         return shutdownLatch.await(timeout, unit);
     }

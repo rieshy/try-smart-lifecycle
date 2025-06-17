@@ -216,25 +216,32 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
      */
     public boolean waitUntilIdle(int timeoutSeconds) throws InterruptedException {
         if (!running) {
-            throw new IllegalStateException("Workflow service is not running");
+            return true; // If service is not running, it's considered idle
         }
 
         long maxWaitTime = timeoutSeconds * 1000L;
         long startTime = System.currentTimeMillis();
 
         while (System.currentTimeMillis() - startTime < maxWaitTime) {
-            WorkflowServiceStatus status = getStatus();
-            if (status.isQueueEmpty() && status.getRunningTasks() == 0) {
-                return true;
+            Thread.sleep(1000);
+
+            boolean isQueueEmpty = taskQueue.isEmpty();
+            long runningTasks = 0;
+            if (isQueueEmpty) {
+                runningTasks = workers.stream()
+                        .mapToLong(worker -> worker.isProcessingTask() ? 1 : 0)
+                        .sum();
+                if (runningTasks == 0) {
+                    logger.info("Workflow service is idle with no running tasks and empty queue.");
+                    return true;
+                }
             }
 
             // Log current status every 5 seconds
             if ((System.currentTimeMillis() - startTime) % 5000 < 1000) {
                 logger.info("Waiting for workflow to become idle. Current status: {} running tasks, queue empty: {}",
-                        status.getRunningTasks(), status.isQueueEmpty());
+                        runningTasks, isQueueEmpty);
             }
-
-            Thread.sleep(1000); // Check every second
         }
 
         WorkflowServiceStatus finalStatus = getStatus();
