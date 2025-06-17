@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 
 @Service
 public class WorkflowService implements SmartLifecycle, DisposableBean {
@@ -273,5 +274,14 @@ public class WorkflowService implements SmartLifecycle, DisposableBean {
         }
 
         logger.info("Workflow Service destroyed");
+    }
+
+    /**
+     * Submits a task and blocks until it is processed.
+     */
+    public void submitTaskAndWait(WorkflowTask task) throws InterruptedException {
+        BlockingWorkflowTask blockingTask = new BlockingWorkflowTask(task);
+        submitTask(blockingTask);
+        blockingTask.awaitCompletion();
     }
 }

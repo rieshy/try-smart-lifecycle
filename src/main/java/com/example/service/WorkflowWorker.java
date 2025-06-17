@@ -80,6 +80,9 @@ public class WorkflowWorker implements Runnable {
             logger.info("Worker {} processing task '{}'", workerId, task);
             task.execute();
             logger.info("Worker {} completed task '{}'", workerId, task);
+            if (task instanceof BlockingWorkflowTask) {
+                ((BlockingWorkflowTask) task).complete();
+            }
         } catch (Exception e) {
             logger.error("Worker {} failed to process task '{}'", workerId, task, e);
         }

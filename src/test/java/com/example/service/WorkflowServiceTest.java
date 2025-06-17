@@ -22,4 +22,17 @@ public class WorkflowServiceTest {
         workflowService.submitTask(task);
         workflowService.waitUntilIdle(30);
     }
+
+    @Test
+    public void submitTaskAndWait_blocksUntilTaskProcessed() throws Exception {
+        WorkflowStartTask task = new WorkflowStartTask();
+        task.setWorkflowId("456");
+        task.setAction(WorkflowAction.START);
+        task.setDescription("Start workflow 456");
+        long start = System.currentTimeMillis();
+        workflowService.submitTaskAndWait(task);
+        long duration = System.currentTimeMillis() - start;
+        // The task sleeps for 10 seconds in execute(), so duration should be >= 10_000 ms
+        assert duration >= 9000 : "Task did not block for expected time";
+    }
 } 
